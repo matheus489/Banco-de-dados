@@ -5,17 +5,17 @@ from tkinter import messagebox
 # Adiciona o diretório raiz ao PYTHONPATH
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from tkinter import Tk, Label, Button, StringVar, Entry, Toplevel, Frame, ttk
-from database.moradores import registrar_morador, atualizar_morador, excluir_morador
+from tkinter import Tk, Label, Button, StringVar, Entry, Toplevel, Frame, ttk, Text
+from database.moradores import registrar_morador, atualizar_morador, excluir_morador, listar_moradores
 from database.db_connection import (
     criar_secretaria, atualizar_secretaria, excluir_secretaria, listar_secretarias,
     associar_funcionario_projeto, remover_funcionario_projeto, listar_funcionarios_por_projeto, listar_projetos_por_funcionario,
-    criar_evento, atualizar_evento, excluir_evento,
-    criar_projeto, excluir_projeto,
-    registrar_morador_evento, remover_morador_evento
+    criar_evento, atualizar_evento, excluir_evento, listar_eventos,
+    criar_projeto, excluir_projeto, listar_projetos,
+    registrar_morador_evento, remover_morador_evento, listar_relacionamentos
 )
 from database.projetos import criar_projeto, alterar_projeto as atualizar_projeto, excluir_projeto
-from database.reclamacoes import atualizar_reclamacao, remover_reclamacao as excluir_reclamacao, criar_reclamacao
+from database.reclamacoes import atualizar_reclamacao, remover_reclamacao as excluir_reclamacao, criar_reclamacao, listar_reclamacoes
 
 class JanelaAdicionarSecretaria:
     def __init__(self, master, callback):
@@ -124,21 +124,25 @@ class App:
         Button(self.frame_secretarias, text="Adicionar Secretaria", command=self.janela_adicionar_secretaria).pack()
         Button(self.frame_secretarias, text="Atualizar Secretaria", command=self.janela_atualizar_secretaria).pack()
         Button(self.frame_secretarias, text="Excluir Secretaria", command=self.janela_excluir_secretaria).pack()
+        Button(self.frame_secretarias, text="Listar Secretarias", command=self.mostrar_secretarias).pack()
 
         # Adicionar widgets ao frame de Funcionários e Projetos
         Button(self.frame_funcionarios_projetos, text="Associar Funcionário a Projeto", command=self.janela_associar_funcionario_projeto).pack()
         Button(self.frame_funcionarios_projetos, text="Remover Funcionário de Projeto", command=self.janela_remover_funcionario_projeto).pack()
         Button(self.frame_funcionarios_projetos, text="Listar Funcionários por Projeto", command=self.janela_listar_funcionarios_por_projeto).pack()
+        Button(self.frame_funcionarios_projetos, text="Listar Projetos por Funcionário", command=self.listar_projetos).pack()
 
         # Adicionar widgets ao frame de Eventos
         Button(self.frame_eventos, text="Criar Evento", command=self.janela_criar_evento).pack()
         Button(self.frame_eventos, text="Atualizar Evento", command=self.janela_atualizar_evento).pack()
         Button(self.frame_eventos, text="Excluir Evento", command=self.janela_excluir_evento).pack()
+        Button(self.frame_eventos, text="Listar Eventos", command=self.listar_eventos).pack()
 
         # Adicionar widgets ao frame de Moradores
         Button(self.frame_moradores, text="Registrar Morador", command=self.janela_registrar_morador).pack()
         Button(self.frame_moradores, text="Atualizar Morador", command=self.janela_atualizar_morador).pack()
         Button(self.frame_moradores, text="Excluir Morador", command=self.janela_excluir_morador).pack()
+        Button(self.frame_moradores, text="Listar Moradores", command=self.listar_moradores).pack()
 
         # Adicionar widgets ao frame de Projetos
         Button(self.frame_projetos, text="Criar Projeto", command=self.janela_criar_projeto).pack()
@@ -149,10 +153,12 @@ class App:
         Button(self.frame_reclamacoes, text="Criar Reclamação", command=self.janela_criar_reclamacao).pack()
         Button(self.frame_reclamacoes, text="Atualizar Reclamação", command=self.janela_atualizar_reclamacao).pack()
         Button(self.frame_reclamacoes, text="Excluir Reclamação", command=self.janela_excluir_reclamacao).pack()
+        Button(self.frame_reclamacoes, text="Listar Reclamações", command=self.listar_reclamacoes).pack()
 
         # Adicionar widgets ao frame de Relacionamentos
         Button(self.frame_relacionamentos, text="Associar Morador a Evento", command=self.janela_associar_morador_evento).pack()
         Button(self.frame_relacionamentos, text="Remover Morador de Evento", command=self.janela_remover_morador_evento).pack()
+        Button(self.frame_relacionamentos, text="Listar Relacionamentos", command=self.listar_relacionamentos).pack()
 
         Label(self.frame_funcionarios_projetos, textvariable=self.resultado).pack()
 
@@ -214,17 +220,16 @@ class App:
     def listar_funcionarios_por_projeto(self, id_projeto):
         funcionarios = listar_funcionarios_por_projeto(id_projeto)
         if funcionarios:
-            self.resultado.set("\n".join([f"{f[0]}: {f[1]}" for f in funcionarios]))
+            self.exibir_resultados_em_janela("Funcionários por Projeto", funcionarios)
         else:
-            self.resultado.set("Nenhum funcionário encontrado para este projeto.")
-        exibir_alerta("Listagem de funcionários concluída!")
+            exibir_alerta("Nenhum funcionário encontrado para este projeto.")
 
     def mostrar_secretarias(self):
         secretarias = listar_secretarias()
         if secretarias:
-            self.resultado.set("\n".join([f"{s[0]}: {s[1]} - {s[2]} - {s.get(3, 'Não informado')}" for s in secretarias]))
+            self.exibir_resultados_em_janela("Secretarias", secretarias)
         else:
-            self.resultado.set("Nenhuma secretaria encontrada.")
+            exibir_alerta("Nenhuma secretaria encontrada.")
 
     # Funções para Eventos
     def janela_criar_evento(self):
@@ -534,6 +539,50 @@ class App:
     def remover_morador_evento(self, id_morador, id_evento):
         remover_morador_evento(id_morador, id_evento)
         exibir_alerta("Morador removido do evento com sucesso!")
+
+    def listar_eventos(self):
+        eventos = listar_eventos()
+        if eventos:
+            self.exibir_resultados_em_janela("Eventos", eventos)
+        else:
+            exibir_alerta("Nenhum evento encontrado.")
+
+    def listar_moradores(self):
+        moradores = listar_moradores()
+        if moradores:
+            self.exibir_resultados_em_janela("Moradores", moradores)
+        else:
+            exibir_alerta("Nenhum morador encontrado.")
+
+    def listar_projetos(self):
+        projetos = listar_projetos()
+        if projetos:
+            self.exibir_resultados_em_janela("Projetos", projetos)
+        else:
+            exibir_alerta("Nenhum projeto encontrado.")
+
+    def listar_reclamacoes(self):
+        reclamacoes = listar_reclamacoes()
+        if reclamacoes:
+            self.exibir_resultados_em_janela("Reclamações", reclamacoes)
+        else:
+            exibir_alerta("Nenhuma reclamação encontrada.")
+
+    def listar_relacionamentos(self):
+        relacionamentos = listar_relacionamentos()
+        if relacionamentos:
+            self.exibir_resultados_em_janela("Relacionamentos", relacionamentos)
+        else:
+            exibir_alerta("Nenhum relacionamento encontrado.")
+
+    def exibir_resultados_em_janela(self, titulo, dados):
+        janela = Toplevel(self.root)
+        janela.title(titulo)
+        text_area = Text(janela, wrap='word')
+        text_area.pack(expand=True, fill='both')
+        for linha in dados:
+            text_area.insert('end', f"{linha}\n")
+        text_area.config(state='disabled')
 
 # Função de utilidade para exibir alertas
 def exibir_alerta(mensagem):

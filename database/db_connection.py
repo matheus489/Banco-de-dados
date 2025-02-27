@@ -355,4 +355,19 @@ def listar_eventos_por_morador(id_morador):
         eventos = cursor.fetchall()
         conn.close()
         return eventos
+    return []
+
+def listar_relacionamentos():
+    conn = conectar_bd()
+    if conn:
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT me.id, m.nome AS morador_nome, e.nome AS evento_nome
+            FROM moradores_eventos me
+            JOIN moradores m ON me.id_morador = m.id_morador
+            JOIN eventos e ON me.id_evento = e.id_evento
+        """)
+        relacionamentos = cursor.fetchall()
+        conn.close()
+        return relacionamentos
     return [] 
