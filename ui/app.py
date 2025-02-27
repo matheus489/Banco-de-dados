@@ -1,6 +1,6 @@
 import sys
 import os
-from tkinter import messagebox
+from tkinter import messagebox, PhotoImage
 
 # Adiciona o diretório raiz ao PYTHONPATH
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
@@ -95,6 +95,11 @@ class App:
     def __init__(self, root):
         self.root = root
         self.root.title("Sistema de Gestão")
+
+        # Carregar a imagem como logotipo
+        self.logo = PhotoImage(file=os.path.join(os.path.dirname(__file__), 'download.png'))
+        # Adicionar a imagem ao topo da janela
+        Label(self.root, image=self.logo).pack(pady=10)
 
         self.resultado = StringVar()
 
